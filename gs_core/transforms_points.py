@@ -1,10 +1,9 @@
 import cupy as cp
 
 
-def view_transform(mu_w, Sigma_w, R, t):
+def view_transform(mu_w, R, t):
     mu_c = R @ mu_w + t
-    Sigma_c = R @ Sigma_w @ R.T
-    return mu_c, Sigma_c
+    return mu_c
 
 
 def calculate_projection_matrix_from_fov(fov_y, aspect, near, far, xp=cp):
