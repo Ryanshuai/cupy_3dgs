@@ -4,7 +4,7 @@
 import numpy as np
 
 
-def view_transform(Sigma_w, R):
+def view_transform_covariance(Sigma_w, R):
     Sigma_c = R @ Sigma_w @ R.T
     return Sigma_c
 

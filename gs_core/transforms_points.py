@@ -1,7 +1,7 @@
 import cupy as cp
 
 
-def view_transform(mu_w, R, t):
+def view_transform_point(mu_w, R, t):
     mu_c = R @ mu_w + t
     return mu_c
 
