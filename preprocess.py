@@ -1,7 +1,7 @@
 from plyfile import PlyData
 import numpy as np
 
-plydata = PlyData.read('train/point_cloud/iteration_30000/point_cloud.ply')
+plydata = PlyData.read('data/train/point_cloud/iteration_30000/point_cloud.ply')
 
 vertex = plydata['vertex']
 
@@ -22,3 +22,4 @@ sh_rest = np.stack([vertex[name] for name in rest_names], axis=1)
 
 num_coeffs = len(rest_names) // 3
 sh_rest = sh_rest.reshape(-1, num_coeffs, 3)
+
