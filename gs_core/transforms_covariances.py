@@ -20,7 +20,7 @@ def calculate_intrinsic_jacobian(x_c, y_c, z_c, fx, fy):
             Focal lengths (camera intrinsics).
 
     Returns:
-        J : ndarray of shape
+        J : ndarray of shape  (N, 2, 3)
             The Jacobian matrix:
                 [ [ fx/z,   0,      -fx * x / z^2 ],
                   [  0,    fy/z,    -fy * y / z^2 ] ]
@@ -52,5 +52,5 @@ def calculate_intrinsic_jacobian(x_c, y_c, z_c, fx, fy):
 
 
 def project_to_screen(Sigma_c, J):
-    Sigma_p = J @ Sigma_c @ J.T
+    Sigma_p = J @ Sigma_c @ J.transpose(0, 2, 1)
     return Sigma_p

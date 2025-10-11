@@ -22,7 +22,7 @@ def calculate_projection_matrix_from_fov(fov_y, aspect, near, far, xp=cp):
     return P
 
 
-def project_to_ndc(mu_c, P):  # P: 3x4 projection matrix
+def project_to_ndc(mu_c, P):  # P: 4x4 projection matrix
     mu_c_homo = cp.concatenate([mu_c, cp.ones((mu_c.shape[0], 1))], axis=-1)
     mu_p_homo = (P @ mu_c_homo.T).T
     mu_p = mu_p_homo[:, :3] / mu_p_homo[:, 3:4]  # clip -> NDC
