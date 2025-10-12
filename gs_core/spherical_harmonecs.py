@@ -1,7 +1,7 @@
 import cupy as cp
 
 
-def eval_sh(sh_coeffs, directions):
+def eval_sh(sh_coeffs, directions):  # direction: gaussians to camera: camera_pos - mu_w = -mu_c
     N = sh_coeffs.shape[0]
     result = cp.zeros((N, 3))
 
@@ -30,7 +30,6 @@ def eval_sh(sh_coeffs, directions):
     result += C2_2 * (2.0 * zz - xx - yy) * sh_coeffs[:, 6, :]
     result += C2_3 * xz * sh_coeffs[:, 7, :]
     result += C2_4 * (xx - yy) * sh_coeffs[:, 8, :]
-
 
     C3_0 = -0.5900435899266435
     C3_1 = 2.890611442640554
