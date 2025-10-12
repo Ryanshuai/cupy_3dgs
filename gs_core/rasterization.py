@@ -37,19 +37,35 @@ def get_tile_center(image_w, image_h, tile_size):
     return tile_centers, n_tiles_x, n_tiles_y
 
 
-def get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen):
-    eigvals = cp.linalg.eigvalsh(sigma_screen)  # (N, 2)
-    gaussian_radius = 3.0 * cp.sqrt(cp.max(eigvals, axis=1))  # (N,)  max for consider rotation
-    gaussian_wh = cp.repeat(gaussian_radius[:, None], 2, axis=1)  # (N, 2)
-    gaussian_wh_marge = gaussian_wh + tile_size * 0.5  # (N, 2)
-    gaussian_wh_marge = gaussian_wh_marge[None, :, :]  # (1, N, 2)
+def get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen,
+                              tile_chunk=2000, gauss_chunk=100000):
+    eigvals = cp.linalg.eigvalsh(sigma_screen)
+    gaussian_radius = 3.0 * cp.sqrt(eigvals.max(axis=1))
+    threshold = gaussian_radius + tile_size * 0.5
 
-    tile_centers = tile_centers[:, None, :]  # (num_tiles, 1, 2)
-    mu_screen = mu_screen[None, :, :2]  # (1, N, 2)
-    dxy = tile_centers - mu_screen  # (num_tiles, N, 2)
+    num_tiles = len(tile_centers)
+    num_gauss = len(mu_screen)
+    rows, cols = [], []
 
-    in_tile = (cp.abs(dxy) <= gaussian_wh_marge).all(axis=2)  # (num_tiles, N)
-    return in_tile
+    for i in range(0, num_tiles, tile_chunk):
+        chunk_tiles = tile_centers[i:i + tile_chunk]
+
+        for j in range(0, num_gauss, gauss_chunk):
+            mu_chunk = mu_screen[j:j + gauss_chunk, :2]
+            thresh_chunk = threshold[j:j + gauss_chunk]
+
+            dxy = chunk_tiles[:, None, :] - mu_chunk[None, :, :]
+            in_tile = (cp.abs(dxy) <= thresh_chunk[None, :, None]).all(axis=2)
+
+            tile_idx, gauss_idx = cp.where(in_tile)
+            rows.append(tile_idx + i)
+            cols.append(gauss_idx + j)
+
+    rows = cp.concatenate(rows)
+    cols = cp.concatenate(cols)
+    data = cp.ones(len(rows), dtype=cp.int32)
+
+    return csr_matrix((data, (rows, cols)), shape=(num_tiles, num_gauss))
 
 
 def render(mu_screen, sigma_screen, opacity, color, screen_w, screen_h, tile_size=16):
