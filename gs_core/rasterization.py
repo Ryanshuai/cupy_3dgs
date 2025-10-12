@@ -38,7 +38,7 @@ def get_tile_center(image_w, image_h, tile_size):
 
 
 def get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen,
-                              tile_chunk=2000, gauss_chunk=100000):
+                              tile_chunk=200, gauss_chunk=10000):
     eigvals = cp.linalg.eigvalsh(sigma_screen)
     gaussian_radius = 3.0 * cp.sqrt(eigvals.max(axis=1))
     threshold = gaussian_radius + tile_size * 0.5
@@ -71,6 +71,7 @@ def get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen,
 
 def render(mu_screen, sigma_screen, opacity, color, screen_w, screen_h, tile_size=16):
     sigma_inv, valid = inverse_sigma(sigma_screen)
+    print(f"Valid covariances: {valid.sum()} / {len(valid)}")
 
     mu_screen = mu_screen[valid]
     sigma_inv = sigma_inv[valid]

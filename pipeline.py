@@ -12,12 +12,12 @@ from gs_core.rasterization import render
 R_view = cp.eye(3, dtype=cp.float32)
 t_view = cp.array([0, 0, -5], dtype=cp.float32)
 
-fov_y = cp.deg2rad(60)
-screen_w = 1088
-screen_h = 720
+fov_y = cp.deg2rad(45)
+screen_w = 320
+screen_h = 192
 aspect = screen_w / screen_h
 near = 0.2
-far = 1000
+far = 10
 
 fx, fy, cx, cy = intrinsics_from_fov(fov_y, screen_w, screen_h)
 
