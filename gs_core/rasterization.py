@@ -51,8 +51,9 @@ def get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen,
         chunk_tiles = tile_centers[i:i + tile_chunk]
 
         for j in range(0, num_gauss, gauss_chunk):
-            mu_chunk = mu_screen[j:j + gauss_chunk, :2]
-            thresh_chunk = threshold[j:j + gauss_chunk]
+            end_j = min(j + gauss_chunk, num_gauss)
+            mu_chunk = mu_screen[j:end_j, :2]
+            thresh_chunk = threshold[j:end_j]
 
             dxy = chunk_tiles[:, None, :] - mu_chunk[None, :, :]
             in_tile = (cp.abs(dxy) <= thresh_chunk[None, :, None]).all(axis=2)
@@ -63,7 +64,7 @@ def get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen,
 
     rows = cp.concatenate(rows)
     cols = cp.concatenate(cols)
-    data = cp.ones(len(rows), dtype=cp.int32)
+    data = cp.ones(len(rows), dtype=cp.float32)
 
     return csr_matrix((data, (rows, cols)), shape=(num_tiles, num_gauss))
 
@@ -78,8 +79,7 @@ def render(mu_screen, sigma_screen, opacity, color, screen_w, screen_h, tile_siz
 
     tile_centers, n_tiles_x, n_tiles_y = get_tile_center(screen_w, screen_h, tile_size)
     num_tiles = tile_centers.shape[0]
-    in_tile = get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen)
-    tile_gaussian_csr = csr_matrix(in_tile.astype(cp.int32))
+    tile_gaussian_csr = get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen)
 
     output = cp.zeros((num_tiles, tile_size, tile_size, 3), dtype=cp.float32)
     block_size = 256

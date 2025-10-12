@@ -13,8 +13,8 @@ R_view = cp.eye(3, dtype=cp.float32)
 t_view = cp.array([0, 0, -5], dtype=cp.float32)
 
 fov_y = cp.deg2rad(60)
-screen_w = 1920
-screen_h = 1088
+screen_w = 1088
+screen_h = 720
 aspect = screen_w / screen_h
 near = 0.2
 far = 1000
@@ -54,6 +54,7 @@ sh_coeffs = sh_coeffs[z_sorted_indices]
 
 colors = eval_sh(sh_coeffs, -mu_c)
 
+print(f"Rendering {mu_screen.shape[0]} Gaussians...")
 image = render(mu_screen, sigma_screen, opacity, colors, screen_w, screen_h, tile_size=16)
 image = cp.clip(image, 0, 1)
 image = (image * 255).astype(cp.uint8)

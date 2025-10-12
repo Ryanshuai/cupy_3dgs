@@ -6,7 +6,7 @@ def eval_sh(sh_coeffs, directions):  # direction: gaussians to camera: camera_po
     result = cp.zeros((N, 3))
 
     dirs = directions / cp.linalg.norm(directions, axis=1, keepdims=True)
-    x, y, z = dirs[:, 0], dirs[:, 1], dirs[:, 2]
+    x, y, z = dirs[:, [0]], dirs[:, [1]], dirs[:, [2]]
 
     C0 = 0.28209479177387814
     result += C0 * sh_coeffs[:, 0, :]
