@@ -1,6 +1,5 @@
 import cupy as cp
 import numpy as np
-from cupyx.scipy.sparse import csr_matrix
 
 
 render_kernel = cp.RawKernel(r'''
@@ -97,11 +96,9 @@ void render_tiles(
         }
     }
 }
-
 ''', 'render_tiles')
 
 if __name__ == "__main__":
-
     # ==== Test setup ====
     cp.random.seed(0)
     np.random.seed(0)
@@ -115,13 +112,17 @@ if __name__ == "__main__":
 
     # Number of Gaussians
     G = 32
-    thr = 0.004  # same threshold as in kernel
+
+    # Constants to mirror the kernel exactly
+    kAlphaEps = 1.0 / 255.0  # ~0.0039215686
+    kAlphaCap = 0.99
+    kStopT = 1e-4
 
     # ==== Random Gaussian setup ====
     mu = cp.stack([
         cp.random.uniform(0.0, W, size=G),
         cp.random.uniform(0.0, H, size=G)
-    ], axis=1).astype(cp.float32)  # Gaussian centers (G,2)
+    ], axis=1).astype(cp.float32)  # (G,2)
 
     # Build random positive-definite covariance matrices
     A = cp.random.normal(0, 1.0, size=(G, 2, 2)).astype(cp.float32)
@@ -161,7 +162,7 @@ if __name__ == "__main__":
             gids = cp.where(keep)[0].astype(cp.int32)
             tile_gid_lists.append(gids)
 
-    # Sort indices (optional: simulates depth ordering)
+    # Optional: stable order (e.g., ascending gid)
     tile_gid_lists = [gids[cp.argsort(gids)] for gids in tile_gid_lists]
 
     # Build CSR arrays
@@ -198,7 +199,7 @@ if __name__ == "__main__":
         block = out_tile_buf[base: base + tile * tile * 3].reshape(tile, tile, 3)
         img_kernel[y0:y1, x0:x1, :] = block[:h, :w, :]
 
-    # ==== Reference implementation (vectorized, CPU-equivalent logic) ====
+    # ==== Reference implementation (vectorized, matches kernel semantics) ====
     yy, xx = cp.meshgrid(
         cp.arange(H, dtype=cp.float32) + 0.5,
         cp.arange(W, dtype=cp.float32) + 0.5,
@@ -207,18 +208,40 @@ if __name__ == "__main__":
 
     img_ref = cp.zeros((H, W, 3), dtype=cp.float32)
     T_prev = cp.ones((H, W), dtype=cp.float32)
+    alive = cp.ones((H, W), dtype=cp.bool_)  # pixels that haven't early-exited
 
     for g in range(G):
+        if not bool(alive.any()):
+            break  # all pixels terminated
+
+        # Only compute on alive pixels to emulate early-stop
         dx = xx - mu[g, 0]
         dy = yy - mu[g, 1]
         inv = Sigma_inv[g]
+
         power = -0.5 * (dx * dx * inv[0, 0] + 2 * dx * dy * inv[0, 1] + dy * dy * inv[1, 1])
-        mask = (power <= 0.0)
-        alpha = opacities[g] * cp.exp(cp.where(mask, power, cp.zeros_like(power)))
-        alpha = cp.where(alpha >= thr, alpha, cp.zeros_like(alpha))
+
+        # power>0 → skip (alpha=0)
+        valid = (power <= 0.0) & alive
+
+        # raw alpha
+        alpha_raw = opacities[g] * cp.exp(cp.where(valid, power, cp.zeros_like(power)))
+        # clamp alpha
+        alpha = cp.minimum(kAlphaCap, alpha_raw)
+        # threshold
+        alpha = cp.where((valid) & (alpha >= kAlphaEps), alpha, cp.zeros_like(alpha))
+
+        # weight with current T
         weight = alpha * T_prev
         img_ref += weight[..., None] * colors[g]
-        T_prev = T_prev * (1.0 - alpha)
+
+        # tentative next T (do NOT apply where it would fall below kStopT)
+        test_T = T_prev * (1.0 - alpha)
+        # pixels that remain alive after this gaussian
+        still_alive = test_T >= kStopT
+        # update T only for still-alive; for terminated pixels, keep T_prev (won't be used further)
+        T_prev = cp.where(still_alive, test_T, T_prev)
+        alive = alive & still_alive
 
     # ==== Error metrics ====
     abs_err = cp.abs(img_ref - img_kernel)
