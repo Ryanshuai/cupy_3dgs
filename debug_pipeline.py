@@ -15,15 +15,47 @@ print(f"Point cloud range: X[{mu_w[:, 0].min():.2f}, {mu_w[:, 0].max():.2f}], "
       f"Y[{mu_w[:, 1].min():.2f}, {mu_w[:, 1].max():.2f}], "
       f"Z[{mu_w[:, 2].min():.2f}, {mu_w[:, 2].max():.2f}]")
 
-R_view = cp.eye(3, dtype=cp.float32)
-t_view = cp.array([0, 0, -5], dtype=cp.float32)
 
-fov_y = cp.deg2rad(45)
-screen_w = 192
-screen_h = 192
+rx, ry, rz = cp.deg2rad(20.22), cp.deg2rad(-22.91), cp.deg2rad(-169.79)
+# 先计算所有三角函数值
+cos_rz, sin_rz = float(cp.cos(rz).get()), float(cp.sin(rz).get())
+cos_ry, sin_ry = float(cp.cos(ry).get()), float(cp.sin(ry).get())
+cos_rx, sin_rx = float(cp.cos(rx).get()), float(cp.sin(rx).get())
+
+# 构建旋转矩阵
+Rz = cp.array([
+    [cos_rz, -sin_rz, 0],
+    [sin_rz, cos_rz, 0],
+    [0, 0, 1]
+], dtype=cp.float32)
+
+Ry = cp.array([
+    [cos_ry, 0, sin_ry],
+    [0, 1, 0],
+    [-sin_ry, 0, cos_ry]
+], dtype=cp.float32)
+
+Rx = cp.array([
+    [1, 0, 0],
+    [0, cos_rx, -sin_rx],
+    [0, sin_rx, cos_rx]
+], dtype=cp.float32)
+
+R_view = Rz @ Ry @ Rx
+
+
+t_view = cp.array([-4.51, -2.21, -4.62], dtype=cp.float32)
+
+
+fov_y = cp.deg2rad(60)
+# screen_w = 320
+# screen_h = 192
+
+screen_w = 1920
+screen_h = 1080
 aspect = screen_w / screen_h
 near = 0.2
-far = 10
+far = 1000.0
 
 fx, fy, cx, cy = intrinsics_from_fov(fov_y, screen_w, screen_h)
 
@@ -37,11 +69,14 @@ P = calculate_projection_matrix_from_fov(fov_y, aspect, near, far)
 mu_ndc = project_to_ndc(mu_c, P)
 
 margin = 1.3
-# frustum_cull = ((mu_c[..., 2] < -near) &
-#                 (mu_ndc[:, 0] >= -margin) & (mu_ndc[:, 0] <= margin) &
+frustum_cull = ((mu_c[..., 2] > near) &
+                (mu_ndc[:, 0] >= -margin) & (mu_ndc[:, 0] <= margin) &
+                (mu_ndc[:, 1] >= -margin) & (mu_ndc[:, 1] <= margin))
+
+# frustum_cull = ((mu_ndc[:, 0] >= -margin) & (mu_ndc[:, 0] <= margin) &
 #                 (mu_ndc[:, 1] >= -margin) & (mu_ndc[:, 1] <= margin))
 
-frustum_cull = cp.ones(len(mu_c), dtype=cp.bool_)  # 临时关闭裁剪，便于调试
+# frustum_cull = cp.ones(len(mu_c), dtype=cp.bool_)  # 临时关闭裁剪，便于调试
 
 # 3. 检查视锥剔除后的点数
 print(f"\nAfter frustum culling: {frustum_cull.sum()} / {len(frustum_cull)} Gaussians")
@@ -83,8 +118,10 @@ print(f"First 10 depths: {mu_c[:10, 2]}")  # 应该从小(远)到大(近)
 camera_center_w = -t_view  # 相机在世界坐标系中的位置
 
 directions = mu_w_sorted - camera_center_w
+directions = directions / cp.linalg.norm(directions, axis=1, keepdims=True)
 colors = eval_sh(sh_coeffs, directions)
-# colors = cp.array([[1.0, 0.0, 0.0]] * len(mu_c))  # 纯红色
+colors = cp.clip(colors, 0, 1)
+
 print(f"Raw SH output (before clip): min={colors.min():.3f}, max={colors.max():.3f}")
 print(f"Sample colors:\n{colors[:5]}")
 
@@ -93,8 +130,10 @@ print(f"\nColor range: [{colors.min():.3f}, {colors.max():.3f}]")
 print(f"Opacity range: [{opacity.min():.3f}, {opacity.max():.3f}]")
 print(f"Activated opacity range: [{opacity.min():.3f}, {opacity.max():.3f}]")
 
-print(f"Screen coords: X[{mu_screen[:, 0].min():.1f}, {mu_screen[:, 0].max():.1f}], Y[{mu_screen[:, 1].min():.1f}, {mu_screen[:, 1].max():.1f}]")
-print(f"Out of bounds: {((mu_screen[:, 0] < 0) | (mu_screen[:, 0] > screen_w) | (mu_screen[:, 1] < 0) | (mu_screen[:, 1] > screen_h)).sum()}")
+print(
+    f"Screen coords: X[{mu_screen[:, 0].min():.1f}, {mu_screen[:, 0].max():.1f}], Y[{mu_screen[:, 1].min():.1f}, {mu_screen[:, 1].max():.1f}]")
+print(
+    f"Out of bounds: {((mu_screen[:, 0] < 0) | (mu_screen[:, 0] > screen_w) | (mu_screen[:, 1] < 0) | (mu_screen[:, 1] > screen_h)).sum()}")
 
 print(f"\nRendering {mu_screen.shape[0]} Gaussians...")
 image = render(mu_screen, sigma_screen, opacity, colors, screen_w, screen_h, tile_size=16)
