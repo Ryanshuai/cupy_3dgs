@@ -28,7 +28,7 @@ mu_ndc = project_to_ndc(mu_c, P)
 
 margin = 1.3
 # https://github.com/graphdeco-inria/diff-gaussian-rasterization/blob/9c5c2028f6fbee2be239bc4c9421ff894fe4fbe0/cuda_rasterizer/auxiliary.h
-frustum_cull = ((mu_c[..., 2] < -near) &  # z_c is negative in front of the camera
+frustum_cull = ((mu_c[..., 2] > near)  &
                 (mu_ndc[:, 0] >= -margin) & (mu_ndc[:, 0] <= margin) &
                 (mu_ndc[:, 1] >= -margin) & (mu_ndc[:, 1] <= margin))
 
