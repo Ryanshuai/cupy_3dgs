@@ -6,8 +6,8 @@ from utils.quaternion import quaternion_to_matrix
 
 # plydata = PlyData.read('data/train/point_cloud/iteration_30000/point_cloud.ply')
 # plydata = PlyData.read('data/train/point_cloud/iteration_30000/point_cloud.ply')
-# plydata = PlyData.read('test/cropped_center_1of5.ply')
-plydata = PlyData.read('test/test_minimal.ply')
+plydata = PlyData.read('test/cropped_center_1of5.ply')
+# plydata = PlyData.read('test/test_minimal.ply')
 
 vertex = plydata['vertex']
 
