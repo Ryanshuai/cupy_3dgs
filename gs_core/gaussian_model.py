@@ -23,13 +23,13 @@ class GaussianModel:
         quaternion = np.stack([vertex['rot_0'], vertex['rot_1'], vertex['rot_2'], vertex['rot_3']], axis=1)
         opacity = np.array(vertex['opacity'])
 
-        sh_coeffs = np.empty((n_points, 48), dtype=np.float32)
-        sh_coeffs[:, 0] = vertex['f_dc_0']
-        sh_coeffs[:, 1] = vertex['f_dc_1']
-        sh_coeffs[:, 2] = vertex['f_dc_2']
+        sh_coeffs = np.empty((n_points, 3, 16), dtype=np.float32)
+        sh_coeffs[:, 0, 0] = vertex['f_dc_0']
+        sh_coeffs[:, 1, 0] = vertex['f_dc_1']
+        sh_coeffs[:, 2, 0] = vertex['f_dc_2']
 
         for i in range(48 - 3):
-            sh_coeffs[:, 3 + i] = vertex[f'f_rest_{i}']
+            sh_coeffs[:, i // 15, i % 15 + 1] = vertex[f'f_rest_{i}']
 
         # preprocess
         mu_w = cp.array(mu_w, dtype=cp.float32)
