@@ -6,7 +6,7 @@ from gs_core.gaussian_model import GaussianModel
 from gs_core.transforms_points import view_transform_point, calculate_projection_matrix_from_fov, project_to_ndc, \
     ndc_to_screen
 from gs_core.transforms_covariances import view_transform_covariance, calculate_intrinsic_jacobian, project_to_screen
-from gs_core.spherical_harmonecs import eval_sh, SH2RGB
+from gs_core.spherical_harmonecs import eval_sh
 from gs_core.rasterization import render
 
 # gm = GaussianModel.from_ply("test/test_diagonal.ply")
@@ -40,8 +40,7 @@ camera_center_w = -camera.t_view @ camera.R_view
 directions = mu_w_sorted - camera_center_w
 directions = directions / cp.linalg.norm(directions, axis=1, keepdims=True)
 colors = eval_sh(sh_coeffs, directions)
-colors = SH2RGB(colors)
-colors = cp.clip(colors, 0, 1)
+colors = cp.clip(colors + 0.5, 0, 1)
 
 # render
 image = render(mu_screen, sigma_screen, opacity, colors, camera.screen_w, camera.screen_h, tile_size=16)
