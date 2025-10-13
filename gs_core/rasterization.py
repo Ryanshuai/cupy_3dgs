@@ -69,7 +69,7 @@ def get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen,
     return csr_matrix((data, (rows, cols)), shape=(num_tiles, num_gauss))
 
 
-def render(mu_screen, sigma_screen, opacity, color, screen_w, screen_h, tile_size=16):
+def render(mu_screen, sigma_screen, opacity, color, screen_w, screen_h, tile_size=16, background_color=(1, 1, 1)):
     sigma_inv, valid = inverse_sigma(sigma_screen)
     print(f"Valid covariances: {valid.sum()} / {len(valid)}")
 
@@ -82,10 +82,13 @@ def render(mu_screen, sigma_screen, opacity, color, screen_w, screen_h, tile_siz
     num_tiles = tile_centers.shape[0]
     tile_gaussian_csr = get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen)
 
-    output = cp.zeros((num_tiles, tile_size, tile_size, 3), dtype=cp.float32)
+    output = cp.empty((num_tiles, tile_size, tile_size, 3), dtype=cp.float32)
     block_size = 256
     grid_size = (num_tiles + block_size - 1) // block_size
 
+    bg_r, bg_g, bg_b = background_color
+
+    print("Passing to CUDA kernel...")
     render_kernel((grid_size,), (block_size,), (
         tile_gaussian_csr.indptr.astype(cp.int32),
         tile_gaussian_csr.indices.astype(cp.int32),
@@ -94,7 +97,8 @@ def render(mu_screen, sigma_screen, opacity, color, screen_w, screen_h, tile_siz
         color.reshape(-1).astype(cp.float32),
         opacity.astype(cp.float32),
         output.reshape(-1),
-        num_tiles, tile_size, screen_w, screen_h
+        num_tiles, tile_size, screen_w, screen_h,
+        cp.float32(bg_r), cp.float32(bg_g), cp.float32(bg_b)
     ))
 
     output = output.reshape(n_tiles_y, n_tiles_x, tile_size, tile_size, 3)

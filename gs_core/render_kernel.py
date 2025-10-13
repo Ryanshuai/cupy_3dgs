@@ -1,7 +1,6 @@
 import cupy as cp
 import numpy as np
 
-
 render_kernel = cp.RawKernel(r'''
 extern "C" __global__
 void render_tiles(
@@ -15,8 +14,16 @@ void render_tiles(
     int num_tiles,
     int tile_size,
     int img_width,
-    int img_height
+    int img_height,
+    float background_r,
+    float background_g,
+    float background_b
 ) {
+    if (blockIdx.x == 0 && threadIdx.x == 0) {
+        printf("KERNEL RECOMPILED! Background: R=%.2f G=%.2f B=%.2f\n", 
+               background_r, background_g, background_b);
+    }
+
     const float kAlphaEps = 1.0f / 255.0f;  // ~0.0039215686
     const float kAlphaCap = 0.99f;          // clamp alpha to avoid full opacity
     const float kStopT    = 1e-4f;          // early-exit threshold on transmittance
@@ -90,6 +97,11 @@ void render_tiles(
 
             const int out_idx = (tile_id * tile_size * tile_size +
                                  py * tile_size + px) * 3;
+                                 
+            pixel_color_r += T * background_r;
+            pixel_color_g += T * background_g;
+            pixel_color_b += T * background_b;
+
             output[out_idx + 0] = pixel_color_r;
             output[out_idx + 1] = pixel_color_g;
             output[out_idx + 2] = pixel_color_b;
