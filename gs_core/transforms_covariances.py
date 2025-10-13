@@ -5,6 +5,7 @@ import cupy as cp
 
 
 def view_transform_covariance(Sigma_w, R):
+    # Sigma_c = R.T @ Sigma_w @ R
     Sigma_c = R @ Sigma_w @ R.T
     return Sigma_c
 
@@ -26,7 +27,7 @@ def calculate_intrinsic_jacobian(x_c, y_c, z_c, fx, fy):
                   [  0,    fy/z,    -fy * y / z^2 ] ]
     """
     # Avoid division by zero
-    z_c_safe = cp.maximum(z_c, 1e-8)
+    z_c_safe = cp.minimum(z_c, -1e-8)
 
     # Compute partial derivatives
     J11 = fx / z_c_safe
@@ -34,8 +35,8 @@ def calculate_intrinsic_jacobian(x_c, y_c, z_c, fx, fy):
     J13 = -fx * x_c / (z_c_safe ** 2)
 
     J21 = cp.zeros_like(J11)
-    J22 = fy / z_c_safe
-    J23 = -fy * y_c / (z_c_safe ** 2)
+    J22 = -fy / z_c_safe
+    J23 = fy * y_c / (z_c_safe ** 2)
 
     J = cp.stack([
         cp.stack([J11, J12, J13], axis=-1),

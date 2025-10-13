@@ -30,8 +30,8 @@ def project_to_ndc(mu_c, P):  # P: 4x4 projection matrix
 
 
 def ndc_to_screen(mu_ndc, width, height):
-    u = (mu_ndc[:, 0] + 1) * 0.5 * width
-    v = (1 - mu_ndc[:, 1]) * 0.5 * height
+    u = (1 - mu_ndc[:, 0]) * 0.5 * width
+    v = (1 + mu_ndc[:, 1]) * 0.5 * height
     return cp.stack([u, v], axis=-1)
 
 
