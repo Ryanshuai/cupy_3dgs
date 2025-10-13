@@ -6,8 +6,10 @@ from utils.quaternion import quaternion_to_matrix
 
 
 class GaussianModel:
-    def __init__(self, mu_w, sigma_w, opacity, sh_coeffs):
+    def __init__(self, mu_w, scales, quaternions, sigma_w, opacity, sh_coeffs):
         self.mu_w = mu_w
+        self.scales = scales
+        self.quaternions = quaternions
         self.sigma_w = sigma_w
         self.opacity = opacity
         self.sh_coeffs = sh_coeffs
@@ -50,4 +52,4 @@ class GaussianModel:
         RS = rotation_matrix * scale_squared[:, None, :]
         sigma_w = RS @ rotation_matrix.transpose(0, 2, 1)
 
-        return cls(mu_w, sigma_w, opacity, sh_coeffs)
+        return cls(mu_w, scales, quaternion, sigma_w, opacity, sh_coeffs)
