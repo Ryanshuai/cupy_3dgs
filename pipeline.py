@@ -9,9 +9,7 @@ from gs_core.transforms_covariances import view_transform_covariance, calculate_
 from gs_core.spherical_harmonecs import eval_sh
 from gs_core.rasterization import render
 
-# gm = GaussianModel.from_ply("test/test_diagonal.ply")
-gm = GaussianModel.from_ply("test/cropped_center_1of5.ply")
-# gm = GaussianModel.from_ply("test/test_single_ball.ply")
+gm = GaussianModel.from_ply("test/test_train_scene.ply")
 
 camera = Camera(position=[0, 0, 5], lookat=[0, 0, 0], up=[0, 1, 0],
                 fov_y=45, near=0.1, far=100, screen_w=1920, screen_h=1080)
