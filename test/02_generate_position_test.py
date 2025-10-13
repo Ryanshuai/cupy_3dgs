@@ -3,6 +3,7 @@ import numpy as np
 
 # Create 4 Gaussians
 N = 4
+
 xyz = np.array([
     [0, 0, 0],    # center - red sphere
     [-2, 0, 0],   # left - green ellipsoid (z elongated)
@@ -87,15 +88,14 @@ vertex_data['opacity'] = opacity
 vertex_data['f_dc_0'] = sh_dc[:, 0]
 vertex_data['f_dc_1'] = sh_dc[:, 1]
 vertex_data['f_dc_2'] = sh_dc[:, 2]
-
 for i in range(45):
     vertex_data[f'f_rest_{i}'] = sh_rest[:, i]
 
 # Save PLY file
 el = PlyElement.describe(vertex_data, 'vertex')
-PlyData([el]).write('test_minimal.ply')
+PlyData([el]).write('test_position.ply')
 
-print("✅ Created test_minimal.ply with 4 Gaussians:")
+print("✅ Created test_position.ply with 4 Gaussians:")
 print("   - Center: red sphere")
 print("   - Left: green ellipsoid (z elongated)")
 print("   - Right: blue ellipsoid (x elongated)")
