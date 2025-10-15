@@ -71,7 +71,7 @@ def get_tile_gaussian_indices(tile_centers, tile_size, mu_screen, sigma_screen,
 
 def render(mu_screen, sigma_screen, opacity, color, screen_w, screen_h, tile_size=16, background_color=(0.5, 0.5, 0.5)):
     sigma_inv, valid = inverse_sigma(sigma_screen)
-    print(f"Valid covariances: {valid.sum()} / {len(valid)}")
+    # print(f"Valid covariances: {valid.sum()} / {len(valid)}")
 
     mu_screen = mu_screen[valid]
     sigma_screen = sigma_screen[valid]

@@ -20,8 +20,8 @@ void render_tiles(
     float background_b
 ) {
     if (blockIdx.x == 0 && threadIdx.x == 0) {
-        printf("KERNEL RECOMPILED! Background: R=%.2f G=%.2f B=%.2f\n", 
-               background_r, background_g, background_b);
+        // printf("KERNEL RECOMPILED! Background: R=%.2f G=%.2f B=%.2f\n", 
+        //        background_r, background_g, background_b);
     }
 
     const float kAlphaEps = 1.0f / 255.0f;  // ~0.0039215686

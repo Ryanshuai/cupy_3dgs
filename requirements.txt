@@ -1,0 +1,4 @@
+cupy==13.6.0
+numpy==1.22.4
+opencv_python==4.11.0.86
+plyfile==1.1.2
