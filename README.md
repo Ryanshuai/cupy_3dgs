@@ -18,14 +18,14 @@ This is a **CuPy-based inference implementation** of 3D Gaussian Splatting, desi
 
 ## 📊 Comparison with Original Implementation
 
-| Feature | This Implementation | Original CUDA Implementation |
-|---------|---------------------|------------------------------|
-| Language | Python + CuPy | C++ + CUDA |
-| Functionality | Inference only | Training + Inference |
-| Code Size | ~800 lines | ~5000+ lines |
-| Dependencies | 4 packages, easy to install | Complex compilation environment |
-| Test Cases | 6 progressive test scenes | No unit tests |
-| Readability | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
+| Feature | This Implementation                 | Original CUDA Implementation |
+|---------|-------------------------------------|------------------------------|
+| Language | Python + CuPy                       | C++ + CUDA |
+| Functionality | Inference only                      | Training + Inference |
+| Code Size | ~800 lines                          | ~5000+ lines |
+| Dependencies | cupy, numpy, opencv-python, plyfile           | Complex compilation environment |
+| Test Cases | 6 progressive test scenes           | No unit tests |
+| Readability | ⭐⭐⭐⭐⭐                               | ⭐⭐⭐ |
 | Use Case | Learning & understanding algorithms | Production & model training |
 
 ## 🚀 Quick Start
